@@ -151,6 +151,22 @@ class Fishtank_Glass extends Shape {
     }
 }
 
+class Fish extends Shape{
+    constructor() {
+        super("position", "normal");
+        this.arrays.position = Vector3.cast(
+            [-4, -1, 1], [-4, 1, 1], [4, -1, 1], [4, 1, 1], // front face
+            [-4, -1, -1], [-4, 1, -1], [4, -1, -1], [4, 1, -1], // back face
+            [-4, 1, 1], [-4, -1, 1], [-4, 1, -1], [-4, -1, -1], // left face
+            [4, 1, 1], [4, -1, 1], [4, 1, -1], [4, -1, -1], // right face
+            [-4, 1, 1], [-4, 1, -1], [4, 1, 1], [4, 1, -1], // top face
+            [-4, -1, 1], [-4, -1, -1], [4, -1, 1], [4, -1, -1], // bottom face
+        )
+        this.arrays.normal = Vector3.cast(); // normals???
+        this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
+            14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+    } 
+}
 
 /////////////////////////////////////////////
 ///////           SCENE           ///////////
@@ -173,7 +189,8 @@ class Base_Scene extends Scene {
           'triangle_strip': new Cube_Single_Strip(),
           "fishtank_base": new Fishtank_Base(),
           "fishtank_wall": new Fishtank_Wall(),
-          "fishtank_glass": new Fishtank_Glass()
+          "fishtank_glass": new Fishtank_Glass(),
+          "fish": new Fish()
       };
 
       // *** Materials
@@ -251,10 +268,22 @@ export class Final_Project extends Base_Scene {
     this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
   }
 
+  draw_fish(context, program_state, fish_transform){
+    // TODO: 
+    const orange = hex_color("#F29C50");
+
+    fish_transform = fish_transform.times(Mat4.translation(0,10, 0));
+    this.shapes.fish.draw(context, program_state, fish_transform, this.materials.plastic.override(orange));
+
+    // update fish position
+    return fish_transform;
+  }
+
   display(context, program_state) {
       super.display(context, program_state);
       const blue = hex_color("#1A9FFA");
       let model_transform = Mat4.identity();
+      let fish_transform = Mat4.identity();
 
       // Draw your entire scene here.  Use this.draw_box( graphics_state, model_transform ) to call your helper.
 
@@ -263,5 +292,7 @@ export class Final_Project extends Base_Scene {
       // call draw_fishtank to place fishtank into the world
       this.draw_fishtank(context, program_state, model_transform);
       
+      // call draw_fish to place fish into the world
+      fish_transform = this.draw_fish(context, program_state, fish_transform);
   }
 }
