@@ -232,13 +232,21 @@ export class Final_Project extends Base_Scene {
    * This gives you a very small code sandbox for editing a simple scene, and for
    * experimenting with matrix transformations.
    */
+    constructor() {
+        super();
+        // Initialize x and y with initial values
+        this.x = 1;
+        this.y = 1;
+    }
 
   make_control_panel() {
       // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-      this.key_triggered_button("Button", ["m"], () => {
-        // placeholder button
-          window.alert("Button pressed");
-      });
+      this.key_triggered_button("Grow", ["g"], () => {
+        // When button is pressed, increment x and y by 0.2, with a maximum of 1.8
+        this.x = Math.min(this.x + 0.2, 1.8);
+        this.y = Math.min(this.y + 0.2, 1.8);
+        console.log("Growing by 0.2");
+    });
   }
 
   draw_box(context, program_state, model_transform, material) {
@@ -249,7 +257,9 @@ export class Final_Project extends Base_Scene {
     // colors
     const grey = hex_color("#D6D9DA");
     const dark_grey = hex_color("99A0A3")
-    
+
+
+    model_transform = model_transform.times(Mat4.scale(this.x, this.y, 1));
     // draw stone base (bottom)
     this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(grey));
 
