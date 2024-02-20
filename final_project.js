@@ -95,6 +95,63 @@ class Cube_Single_Strip extends Shape {
   }
 }
 
+class Fishtank_Base extends Shape {
+    constructor() {
+        super("position", "normal");
+        this.arrays.position = Vector3.cast(
+            [-28, -2, 10], [-28, 2, 10], [28, -2, 10], [28, 2, 10], // front face
+            [-28, -2, -10], [-28, 2, -10], [28, -2, -10], [28, 2, -10], // back face
+            [-28, 2, 10], [-28, -2, 10], [-28, 2, -10], [-28, -2, -10], // left face
+            [28, 2, 10], [28, -2, 10], [28, 2, -10], [28, -2, -10], // right face
+            [-28, 2, 10], [-28, 2, -10], [28, 2, 10], [28, 2, -10], // top face
+            [-28, -2, 10], [-28, -2, -10], [28, -2, 10], [28, -2, -10], // bottom face
+        )
+        this.arrays.normal = Vector3.cast(); // normals???
+        this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
+            14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+    }
+}
+
+class Fishtank_Wall extends Shape {
+    constructor() {
+        super("position", "normal");
+        this.arrays.position = Vector3.cast(
+            [-3, -10, 10], [-3, 10, 10], [3, -10, 10], [3, 10, 10], // front face
+            [-3, -10, -10], [-3, 10, -10], [3, -10, -10], [3, 10, -10], // back face
+            [-3, 10, 10], [-3, -10, 10], [-3, 10, -10], [-3, -10, -10], // left face
+            [3, 10, 10], [3, -10, 10], [3, 10, -10], [3, -10, -10], // right face
+            [-3, 10, 10], [-3, 10, -10], [3, 10, 10], [3, 10, -10], // top face
+            [-3, -10, 10], [-3, -10, -10], [3, -10, 10], [3, -10, -10], // bottom face
+        )
+        this.arrays.normal = Vector3.cast(); // normals???
+        this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
+            14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+    }
+}
+
+class Fishtank_Glass extends Shape {
+    constructor() {
+        super("position", "color");
+        // When a set of lines is used in graphics, you should think of the list entries as
+        // broken down into pairs; each pair of vertices will be drawn as a line segment.
+        // Note: since the outline is rendered with Basic_shader, you need to redefine the position and color of each vertex
+        this.arrays.position = Vector3.cast(
+            [-22, -10, 1], [-22, 10, 1], // left line
+            [22, -10, 1], [22, 10, 1], // right line
+            [-22, 10, 1], [22, 10, 1], // top line
+            [-22, -10, 1], [22, -10, 1] // bottom line
+        );
+        this.arrays.color = [ 
+            vec4(1,1,1,1), vec4(1,1,1,1), 
+            vec4(1,1,1,1), vec4(1,1,1,1), 
+            vec4(1,1,1,1), vec4(1,1,1,1), 
+            vec4(1,1,1,1), vec4(1,1,1,1)
+        ];
+        this.indices = false;
+    }
+}
+
+
 /////////////////////////////////////////////
 ///////           SCENE           ///////////
 /////////////////////////////////////////////
@@ -113,7 +170,10 @@ class Base_Scene extends Scene {
       this.shapes = {
           'cube': new Cube(),
           'outline': new Cube_Outline(),
-          'triangle_strip': new Cube_Single_Strip()
+          'triangle_strip': new Cube_Single_Strip(),
+          "fishtank_base": new Fishtank_Base(),
+          "fishtank_wall": new Fishtank_Wall(),
+          "fishtank_glass": new Fishtank_Glass()
       };
 
       // *** Materials
@@ -133,7 +193,7 @@ class Base_Scene extends Scene {
       if (!context.scratchpad.controls) {
           this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
           // Define the global camera and projection matrices, which are stored in program_state.
-          program_state.set_camera(Mat4.translation(5, -10, -30));
+          program_state.set_camera(Mat4.translation(0, -14, -55));
       }
       program_state.projection_transform = Mat4.perspective(
           Math.PI / 4, context.width / context.height, 1, 100);
@@ -168,13 +228,40 @@ export class Final_Project extends Base_Scene {
       this.shapes.cube.draw(context, program_state, model_transform, material)
   }
 
+  draw_fishtank(context, program_state, model_transform){
+    // colors
+    const grey = hex_color("#D6D9DA");
+    const dark_grey = hex_color("99A0A3")
+    
+    // draw stone base (bottom)
+    this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(grey));
+
+    // draw stone walls (left/right)
+    let wall_transform = model_transform;
+    wall_transform = wall_transform.times(Mat4.translation(-25,12,0));
+    this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
+    wall_transform = wall_transform.times(Mat4.translation(50,0,0));
+    this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
+
+    // draw glass panels (front/back)
+    let glass_transform = model_transform;
+    glass_transform = glass_transform.times(Mat4.translation(0,12,9));
+    this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
+    glass_transform = glass_transform.times(Mat4.translation(0,0,-20));
+    this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
+  }
+
   display(context, program_state) {
       super.display(context, program_state);
-      const blue = hex_color("#1a9ffa");
+      const blue = hex_color("#1A9FFA");
       let model_transform = Mat4.identity();
-      
+
       // Draw your entire scene here.  Use this.draw_box( graphics_state, model_transform ) to call your helper.
 
-      this.draw_box(context, program_state, model_transform, this.materials.plastic.override(blue));
+      //this.draw_box(context, program_state, model_transform, this.materials.plastic.override(blue));
+
+      // call draw_fishtank to place fishtank into the world
+      this.draw_fishtank(context, program_state, model_transform);
+      
   }
 }
