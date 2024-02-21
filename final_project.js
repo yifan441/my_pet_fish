@@ -239,70 +239,97 @@ export class Final_Project extends Base_Scene {
         this.y = 1;
     }
 
-  make_control_panel() {
-      // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-      this.key_triggered_button("Grow", ["g"], () => {
-        // When button is pressed, increment x and y by 0.2, with a maximum of 1.8
-        this.x = Math.min(this.x + 0.2, 1.8);
-        this.y = Math.min(this.y + 0.2, 1.8);
-        console.log("Growing by 0.2");
-    });
-  }
+    make_control_panel() {
+        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
+        this.key_triggered_button("Grow Tank", ["g"], () => {
+            // When button is pressed, increment x and y by 0.2, with a maximum of 1.8
+            this.x = Math.min(this.x + 0.1, 1.8);
+            this.y = Math.min(this.y + 0.1, 1.8);
+            console.log("Growing by 0.1");
+        });
+    }
 
-  draw_box(context, program_state, model_transform, material) {
-      this.shapes.cube.draw(context, program_state, model_transform, material)
-  }
+    draw_box(context, program_state, model_transform, material) {
+        this.shapes.cube.draw(context, program_state, model_transform, material)
+    }
 
-  draw_fishtank(context, program_state, model_transform){
-    // colors
-    const grey = hex_color("#D6D9DA");
-    const dark_grey = hex_color("99A0A3")
+    draw_fishtank(context, program_state, model_transform){
+        // colors
+        const grey = hex_color("#D6D9DA");
+        const dark_grey = hex_color("99A0A3")
 
 
-    model_transform = model_transform.times(Mat4.scale(this.x, this.y, 1));
-    // draw stone base (bottom)
-    this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(grey));
+        model_transform = model_transform.times(Mat4.scale(this.x, this.y, 1));
+        // draw stone base (bottom)
+        this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(grey));
 
-    // draw stone walls (left/right)
-    let wall_transform = model_transform;
-    wall_transform = wall_transform.times(Mat4.translation(-25,12,0));
-    this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
-    wall_transform = wall_transform.times(Mat4.translation(50,0,0));
-    this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
+        // draw stone walls (left/right)
+        let wall_transform = model_transform;
+        wall_transform = wall_transform.times(Mat4.translation(-25,12,0));
+        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
+        wall_transform = wall_transform.times(Mat4.translation(50,0,0));
+        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
 
-    // draw glass panels (front/back)
-    let glass_transform = model_transform;
-    glass_transform = glass_transform.times(Mat4.translation(0,12,9));
-    this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
-    glass_transform = glass_transform.times(Mat4.translation(0,0,-20));
-    this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
-  }
+        // draw glass panels (front/back)
+        let glass_transform = model_transform;
+        glass_transform = glass_transform.times(Mat4.translation(0,12,9));
+        this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
+        glass_transform = glass_transform.times(Mat4.translation(0,0,-20));
+        this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
+    }
 
-  draw_fish(context, program_state, fish_transform){
-    // TODO: 
-    const orange = hex_color("#F29C50");
+    detect_collision_left(fish_transform) {
+        const min_x = -25 * this.x + 4; // Adjusted for fish size and fish tank growth
+        const fish_x_position = fish_transform[0][3];
+    
+        return fish_x_position <= min_x;
+    }
+    
+    detect_collision_right(fish_transform) {
+        const max_x = 25 * this.x - 4; // Adjusted for fish size and fish tank growth
+        const fish_x_position = fish_transform[0][3];
+    
+        return fish_x_position >= max_x;
+    }
 
-    fish_transform = fish_transform.times(Mat4.translation(0,10, 0));
-    this.shapes.fish.draw(context, program_state, fish_transform, this.materials.plastic.override(orange));
+    draw_fish(context, program_state, fish_transform, current_time) {
+        const orange = hex_color("#F29C50");
+    
+        // Calculate fish's vertical movement based on sine wave function
+        const vertical_offset = 2 * Math.sin(2 * Math.PI * 0.5 * current_time / 1000);
+    
+        // Calculate fish's horizontal movement based on time
+        let horizontal_offset = 5 * current_time / 1000;
+    
+        // Adjust the fish's position based on vertical and horizontal offsets
+        fish_transform = fish_transform.times(Mat4.translation(horizontal_offset, 10 + vertical_offset, 0));
+    
+        // Check for collisions with walls
+        if (this.detect_collision_left(fish_transform) || this.detect_collision_right(fish_transform)) {
+            // Change direction upon collision with the wall
+            horizontal_offset *= -1;
+            fish_transform = fish_transform.times(Mat4.translation(horizontal_offset, 0, 0));
+        }
+    
+        // Draw the fish
+        this.shapes.fish.draw(context, program_state, fish_transform, this.materials.plastic.override(orange));
+    
+        // Update fish position
+        return fish_transform;
+    }
 
-    // update fish position
-    return fish_transform;
-  }
-
-  display(context, program_state) {
-      super.display(context, program_state);
-      const blue = hex_color("#1A9FFA");
-      let model_transform = Mat4.identity();
-      let fish_transform = Mat4.identity();
-
-      // Draw your entire scene here.  Use this.draw_box( graphics_state, model_transform ) to call your helper.
-
-      //this.draw_box(context, program_state, model_transform, this.materials.plastic.override(blue));
-
-      // call draw_fishtank to place fishtank into the world
-      this.draw_fishtank(context, program_state, model_transform);
-      
-      // call draw_fish to place fish into the world
-      fish_transform = this.draw_fish(context, program_state, fish_transform);
-  }
+    display(context, program_state) {
+        super.display(context, program_state);
+        const blue = hex_color("#1A9FFA");
+        let model_transform = Mat4.identity();
+        let fish_transform = Mat4.identity();
+    
+        // Draw your entire scene here. Use this.draw_box(graphics_state, model_transform) to call your helper.
+    
+        // Call draw_fishtank to place fishtank into the world
+        this.draw_fishtank(context, program_state, model_transform);
+        
+        // Call draw_fish to place fish into the world and pass the current time
+        fish_transform = this.draw_fish(context, program_state, fish_transform, program_state.animation_time);
+    }
 }
