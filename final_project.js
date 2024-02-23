@@ -279,14 +279,14 @@ export class Final_Project extends Base_Scene {
     }
 
     detect_collision_left(fish_transform, horizontal_offset) {
-        const min_x = -25 * this.x + 4; // Adjusted for fish size and fish tank growth
+        const min_x = -25 * this.x + 1; // Adjusted for fish size and fish tank growth
         const fish_x_position = fish_transform[0][3] + horizontal_offset; // Update fish x position with offset
     
         return fish_x_position <= min_x;
     }
     
     detect_collision_right(fish_transform, horizontal_offset) {
-        const max_x = 25 * this.x - 4; // Adjusted for fish size and fish tank growth
+        const max_x = 25 * this.x - 1; // Adjusted for fish size and fish tank growth
         const fish_x_position = fish_transform[0][3] + horizontal_offset; // Update fish x position with offset
     
         return fish_x_position >= max_x;
@@ -298,15 +298,14 @@ export class Final_Project extends Base_Scene {
         // Calculate fish's vertical movement based on sine wave function
         const vertical_offset = 2 * Math.sin(2 * Math.PI * 0.5 * current_time / 1000);
 
-        // Calculate fish's horizontal movement based on time
-        let horizontal_offset = -(5 * current_time / 1000);
+        // Calculate fish's horizontal movement based on cosine wave function
+        let horizontal_offset = 6 * Math.cos(2 * Math.PI * 0.5 * current_time / 1000) - 3 * Math.cos(3 * Math.PI * 0.5 * current_time / 1000) - 2 * Math.sin(0.5 * Math.PI * 3 * current_time / 1000);
 
         // Check for collisions with walls
         while (this.detect_collision_left(fish_transform, horizontal_offset) || this.detect_collision_right(fish_transform, horizontal_offset)) {
             // Gradually change direction upon collision with the wall
-            horizontal_offset += 0.5 * (current_time / 1000); // Gradually reverse direction
+            horizontal_offset += 5 * (current_time / 1000); // Gradually reverse direction
         }
-
         // Adjust the fish's position based on vertical and horizontal offsets
         fish_transform = fish_transform.times(Mat4.translation(horizontal_offset, 10 + vertical_offset, 0));
 
