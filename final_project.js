@@ -200,6 +200,10 @@ class Base_Scene extends Scene {
       };
       // The white material and basic shader are used for drawing the outline.
       this.white = new Material(new defs.Basic_Shader());
+
+      // Variables 
+      this.money = 0;
+      this.lastUpdateTime = 0;
   }
 
   display(context, program_state) {
@@ -316,11 +320,22 @@ export class Final_Project extends Base_Scene {
         return fish_transform;
     }
 
+    calculate_money(t){
+        const elapsedTime = t - this.lastUpdateTime;
+
+        if(elapsedTime >= 2){
+            this.money += 1;
+            this.lastUpdateTime = t;
+        }
+
+    }
+
     display(context, program_state) {
         super.display(context, program_state);
         const blue = hex_color("#1A9FFA");
         let model_transform = Mat4.identity();
         let fish_transform = Mat4.identity();
+        const t = program_state.animation_time / 1000;
     
         // Draw your entire scene here. Use this.draw_box(graphics_state, model_transform) to call your helper.
     
@@ -329,5 +344,8 @@ export class Final_Project extends Base_Scene {
         
         // Call draw_fish to place fish into the world and pass the current time
         fish_transform = this.draw_fish(context, program_state, fish_transform, program_state.animation_time);
+
+        // Calculate Money 
+        this.calculate_money(t);
     }
 }
