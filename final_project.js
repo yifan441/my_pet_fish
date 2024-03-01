@@ -156,6 +156,29 @@ class Fishtank_Glass extends Shape {
     }
 }
 
+class Fishtank_Back_Glass extends Shape {
+    constructor() {
+        super("position", "normal");
+
+        // Define the vertices of the back wall
+        this.arrays.position = Vector3.cast(
+            [-22, -10, -10], [-22, 10, -10], // bottom left
+            [22, -10, -10], [22, 10, -10]   // bottom right
+        );
+
+        // The normal of the back wall will be facing away from the viewer
+        // You can manually specify the normal as (0, 0, 1) for all vertices
+        // or use automatic normal calculation if your shader supports it
+        this.arrays.normal = Vector3.cast(
+            [0, 0, 1], [0, 0, 1],
+            [0, 0, 1], [0, 0, 1]
+        );
+
+        // Indicate that the shape is composed of triangles
+        this.indices = [0, 1, 2, 1, 3, 2];
+    }
+}
+
 class Fish extends Shape{
     constructor() {
         super("position", "normal");
@@ -196,6 +219,7 @@ class Base_Scene extends Scene {
           "fishtank_wall": new Fishtank_Wall(),
           "fishtank_glass": new Fishtank_Glass(),
           "fish": new Fish(),
+          "fishtank_back_glass": new Fishtank_Back_Glass(),
 
           // Text 
           "text": new Text_Line(5),
@@ -232,7 +256,7 @@ class Base_Scene extends Scene {
           Math.PI / 4, context.width / context.height, 1, 100);
 
       // *** Lights: *** Values of vector or point lights.
-      const light_position = vec4(0, 5, 5, 1);
+      const light_position = vec4(0, 35, 5, 1);
       program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
   }
 }
@@ -260,7 +284,7 @@ export class Final_Project extends Base_Scene {
         this.key_triggered_button("Grow Tank", ["g"], () => {
             // When button is pressed, increment x and y by 0.2, with a maximum of 1.8
             this.x = Math.min(this.x + 0.1, 1.8);
-            this.y = Math.min(this.y + 0.1, 1.8);
+
             console.log("Growing by 0.1");
         });
     }
@@ -273,7 +297,15 @@ export class Final_Project extends Base_Scene {
         // colors
         const grey = hex_color("#D6D9DA");
         const dark_grey = hex_color("99A0A3")
+        // fish tank background color 
+        const initial_color = hex_color("#6495ED"); // Initial color (blue)
+        const final_color = hex_color("#8B4513");   // Final color (brown)
 
+        // Calculate the interpolation factor based on time
+        let color_time = Math.min((program_state.animation_time / 100000), 1); // Animation time in seconds, mod 1 to keep it in the range [0, 1]
+
+        // Interpolate between initial and final colors
+        const interpolated_color = initial_color.mix(final_color, color_time);
 
         model_transform = model_transform.times(Mat4.scale(this.x, this.y, 1));
         // draw stone base (bottom)
@@ -290,14 +322,16 @@ export class Final_Project extends Base_Scene {
         let glass_transform = model_transform;
         glass_transform = glass_transform.times(Mat4.translation(0,12,9));
         this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
-        glass_transform = glass_transform.times(Mat4.translation(0,0,-20));
-        this.shapes.fishtank_glass.draw(context, program_state, glass_transform, this.white, "LINES")
+        // back
+        glass_transform = glass_transform.times(Mat4.translation(0,0,-9));
+        this.shapes.fishtank_back_glass.draw(context, program_state, glass_transform, this.materials.plastic.override(interpolated_color));
+        glass_transform = glass_transform.times(Mat4.rotation(Math.PI, 0, 0, 1));
     }
 
     detect_collision_left(fish_transform, horizontal_offset) {
         const min_x = -25 * this.x + 1; // Adjusted for fish size and fish tank growth
         const fish_x_position = fish_transform[0][3] + horizontal_offset; // Update fish x position with offset
-    
+        
         return fish_x_position <= min_x;
     }
     
@@ -312,10 +346,10 @@ export class Final_Project extends Base_Scene {
         const orange = hex_color("#F29C50");
 
         // Calculate fish's vertical movement based on sine wave function
-        const vertical_offset = 2 * Math.sin(2 * Math.PI * 0.5 * current_time / 1000);
+        const vertical_offset = 2 * this.x * Math.sin(2 * Math.PI * 0.5 * current_time / 1000) + Math.sin(2 * Math.PI * 0.5 * current_time / 3000);
 
         // Calculate fish's horizontal movement based on cosine wave function
-        let horizontal_offset = 6 * Math.cos(2 * Math.PI * 0.5 * current_time / 1000) - 3 * Math.cos(3 * Math.PI * 0.5 * current_time / 1000) - 2 * Math.sin(0.5 * Math.PI * 3 * current_time / 1000);
+        let horizontal_offset = 2 * this.x * (4 * Math.cos(2 * Math.PI * 0.5 * current_time / 2000) - 3 * Math.cos(3 * Math.PI * 0.5 * current_time / 2000) - 2 * Math.sin(0.5 * Math.PI * 3 * current_time / 1000)) + 3 * Math.sin(2 * Math.PI * 0.5 * current_time / 3000);
 
         // Check for collisions with walls
         while (this.detect_collision_left(fish_transform, horizontal_offset) || this.detect_collision_right(fish_transform, horizontal_offset)) {
