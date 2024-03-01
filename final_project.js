@@ -240,6 +240,8 @@ class Base_Scene extends Scene {
       // Variables 
       this.money = 0;
       this.lastUpdateTime = 0;
+
+      
   }
 
   display(context, program_state) {
@@ -287,6 +289,15 @@ export class Final_Project extends Base_Scene {
 
             console.log("Growing by 0.1");
         });
+
+        this.key_triggered_button("Clean Tank", ["c"], () => {
+            console.log("Tank Fully Clean");
+        });
+
+        this.key_triggered_button("Feed Fish", ["f"], () => {
+            console.log("Fish Fed");
+        });
+
     }
 
     draw_box(context, program_state, model_transform, material) {
