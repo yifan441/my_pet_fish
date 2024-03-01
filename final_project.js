@@ -1,8 +1,13 @@
 import { defs, tiny } from './examples/common.js';
+import { Text_Line } from './examples/text-demo.js';
+
 
 const {
-  Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
+
+const {Axis_Arrows, Textured_Phong} = defs
+
 
 /////////////////////////////////////////////
 ///////    SHAPE DEFINITIONS      ///////////
@@ -190,13 +195,20 @@ class Base_Scene extends Scene {
           "fishtank_base": new Fishtank_Base(),
           "fishtank_wall": new Fishtank_Wall(),
           "fishtank_glass": new Fishtank_Glass(),
-          "fish": new Fish()
+          "fish": new Fish(),
+
+          // Text 
+          "text": new Text_Line(5),
       };
 
       // *** Materials
+      const texture = new defs.Textured_Phong(1);
       this.materials = {
           plastic: new Material(new defs.Phong_Shader(),
               {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+          text_image: new Material(texture, {
+            ambient: 1, diffusivity: 0, specularity: 0,
+            texture: new Texture("assets/text.png")}),
       };
       // The white material and basic shader are used for drawing the outline.
       this.white = new Material(new defs.Basic_Shader());
@@ -320,14 +332,17 @@ export class Final_Project extends Base_Scene {
         return fish_transform;
     }
 
-    calculate_money(t){
+    draw_money(context, program_state, model_transform, t){
         const elapsedTime = t - this.lastUpdateTime;
 
-        if(elapsedTime >= 2){
+        if(elapsedTime >= 1){
             this.money += 1;
             this.lastUpdateTime = t;
         }
 
+        let test = this.money;
+        this.shapes.text.set_string(test.toString(), context.context);
+        this.shapes.text.draw(context, program_state, model_transform, this.materials.text_image);
     }
 
     display(context, program_state) {
@@ -335,6 +350,7 @@ export class Final_Project extends Base_Scene {
         const blue = hex_color("#1A9FFA");
         let model_transform = Mat4.identity();
         let fish_transform = Mat4.identity();
+        let money_transform = Mat4.identity().times(Mat4.translation(35,33,0));
         const t = program_state.animation_time / 1000;
     
         // Draw your entire scene here. Use this.draw_box(graphics_state, model_transform) to call your helper.
@@ -346,6 +362,6 @@ export class Final_Project extends Base_Scene {
         fish_transform = this.draw_fish(context, program_state, fish_transform, program_state.animation_time);
 
         // Calculate Money 
-        this.calculate_money(t);
+        this.draw_money(context, program_state, money_transform, t);
     }
 }
