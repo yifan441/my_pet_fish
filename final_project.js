@@ -340,8 +340,8 @@ export class Final_Project extends Base_Scene {
             this.lastUpdateTime = t;
         }
 
-        let test = this.money;
-        this.shapes.text.set_string(test.toString(), context.context);
+        let money_text = `$${this.money}`;
+        this.shapes.text.set_string(money_text.toString(), context.context);
         this.shapes.text.draw(context, program_state, model_transform, this.materials.text_image);
     }
 
@@ -350,7 +350,7 @@ export class Final_Project extends Base_Scene {
         const blue = hex_color("#1A9FFA");
         let model_transform = Mat4.identity();
         let fish_transform = Mat4.identity();
-        let money_transform = Mat4.identity().times(Mat4.translation(35,33,0));
+        let money_transform = Mat4.identity().times(Mat4.translation(32,33,0));
         const t = program_state.animation_time / 1000;
     
         // Draw your entire scene here. Use this.draw_box(graphics_state, model_transform) to call your helper.
