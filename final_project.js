@@ -343,7 +343,7 @@ export class Final_Project extends Base_Scene {
     }
 
     draw_fish(context, program_state, fish_transform, current_time) {
-        const orange = hex_color("#F29C50");
+        const orange = hex_color("#00FF00");
 
         // Calculate fish's vertical movement based on sine wave function
         const vertical_offset = 2 * this.x * Math.sin(2 * Math.PI * 0.5 * current_time / 1000) + Math.sin(2 * Math.PI * 0.5 * current_time / 3000);
