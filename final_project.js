@@ -298,6 +298,10 @@ export class Final_Project extends Base_Scene {
             console.log("Fish Fed");
         });
 
+        this.key_triggered_button("Add Decoration", ["d"], () => {
+            console.log("Decoration Added");
+        });
+
     }
 
     draw_box(context, program_state, model_transform, material) {
