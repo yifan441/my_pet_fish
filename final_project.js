@@ -6,7 +6,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture,
 } = tiny;
 
-const {Axis_Arrows, Textured_Phong} = defs
+const {Textured_Phong} = defs
 
 
 /////////////////////////////////////////////
@@ -179,6 +179,34 @@ class Fishtank_Back_Glass extends Shape {
     }
 }
 
+class Square extends Shape {
+    constructor() {
+        super("position", "normal");
+
+        // Define the vertices of the square
+        this.arrays.position = Vector3.cast(
+            [-75, -75, -22], [-75, 75, -22], // bottom left
+            [75, -75, -22], [75, 75, -22]    // bottom right
+        );
+
+        this.arrays.texture_coord = Vector.cast(
+            [0, 0], [0, 1], // bottom left
+            [1, 0], [1, 1]  // bottom right
+        );
+
+        // The normal of the square will be facing away from the viewer
+        // You can manually specify the normal as (0, 0, 1) for all vertices
+        // or use automatic normal calculation if your shader supports it
+        this.arrays.normal = Vector3.cast(
+            [0, 0, 1], [0, 0, 1],
+            [0, 0, 1], [0, 0, 1]
+        );
+
+        // Indicate that the shape is composed of triangles
+        this.indices = [0, 1, 2, 1, 3, 2];
+    }
+}
+
 class Fish extends Shape{
     constructor() {
         super("position", "normal");
@@ -206,41 +234,49 @@ class Base_Scene extends Scene {
    *  Setup the shapes, materials, camera, and lighting here.
    */
   constructor() {
-      // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
-      super();
-      this.hover = this.swarm = false;
+        // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
+        super();
+        this.hover = this.swarm = false;
 
-      // At the beginning of our program, load one of each of these shape definitions onto the GPU.
-      this.shapes = {
-          'cube': new Cube(),
-          'outline': new Cube_Outline(),
-          'triangle_strip': new Cube_Single_Strip(),
-          "fishtank_base": new Fishtank_Base(),
-          "fishtank_wall": new Fishtank_Wall(),
-          "fishtank_glass": new Fishtank_Glass(),
-          "fish": new Fish(),
-          "fishtank_back_glass": new Fishtank_Back_Glass(),
+        // At the beginning of our program, load one of each of these shape definitions onto the GPU.
+        this.shapes = {
+            'cube': new Cube(),
+            'outline': new Cube_Outline(),
+            'triangle_strip': new Cube_Single_Strip(),
+            "fishtank_base": new Fishtank_Base(),
+            "fishtank_wall": new Fishtank_Wall(),
+            "fishtank_glass": new Fishtank_Glass(),
+            "fish": new Fish(),
+            "fishtank_back_glass": new Fishtank_Back_Glass(),
 
-          // Text 
-          "text": new Text_Line(5),
-      };
+            // Text 
+            "text": new Text_Line(5),
 
-      // *** Materials
-      const texture = new defs.Textured_Phong(1);
-      this.materials = {
-          plastic: new Material(new defs.Phong_Shader(),
-              {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
-          text_image: new Material(texture, {
-            ambient: 1, diffusivity: 0, specularity: 0,
-            texture: new Texture("assets/text.png")}),
-      };
-      // The white material and basic shader are used for drawing the outline.
-      this.white = new Material(new defs.Basic_Shader());
+            // Background
+            "square": new Square(),
+        };
 
-      // Variables 
-      this.money = 0;
-      this.lastUpdateTime = 0;
+        // *** Materials
+        this.materials = {
+                plastic: new Material(new defs.Phong_Shader(),
+                    {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")
+                }),
+                text_image: new Material(new Textured_Phong(1), {
+                    ambient: 1, diffusivity: 0, specularity: 0,
+                    texture: new Texture("assets/text.png")
+                }),
+                background: new Material(new Textured_Phong(), {
+                    color: hex_color("#000000"),
+                    ambient: 1, 
+                    texture: new Texture("assets/background.png"),
+                }),
+        };
+        // The white material and basic shader are used for drawing the outline.
+        this.white = new Material(new defs.Basic_Shader());
 
+        // Variables 
+        this.money = 0;
+        this.lastUpdateTime = 0;
       
   }
 
@@ -316,6 +352,7 @@ export class Final_Project extends Base_Scene {
         const initial_color = hex_color("#6495ED"); // Initial color (blue)
         const final_color = hex_color("#8B4513");   // Final color (brown)
 
+
         // Calculate the interpolation factor based on time
         let color_time = Math.min((program_state.animation_time / 100000), 1); // Animation time in seconds, mod 1 to keep it in the range [0, 1]
 
@@ -325,6 +362,7 @@ export class Final_Project extends Base_Scene {
         model_transform = model_transform.times(Mat4.scale(this.x, this.y, 1));
         // draw stone base (bottom)
         this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(grey));
+
 
         // draw stone walls (left/right)
         let wall_transform = model_transform;
@@ -340,13 +378,16 @@ export class Final_Project extends Base_Scene {
         // back
         glass_transform = glass_transform.times(Mat4.translation(0,0,-9));
         this.shapes.fishtank_back_glass.draw(context, program_state, glass_transform, this.materials.plastic.override(interpolated_color));
-        glass_transform = glass_transform.times(Mat4.rotation(Math.PI, 0, 0, 1));
+
+        glass_transform = glass_transform.times(Mat4.translation(0, 5, -19));
+        this.shapes.square.draw(context, program_state, glass_transform, this.materials.background);
+
     }
 
     detect_collision_left(fish_transform, horizontal_offset) {
         const min_x = -25 * this.x + 1; // Adjusted for fish size and fish tank growth
         const fish_x_position = fish_transform[0][3] + horizontal_offset; // Update fish x position with offset
-        
+
         return fish_x_position <= min_x;
     }
     
@@ -401,9 +442,7 @@ export class Final_Project extends Base_Scene {
         let fish_transform = Mat4.identity();
         let money_transform = Mat4.identity().times(Mat4.translation(35,33,0));
         const t = program_state.animation_time / 1000;
-    
-        // Draw your entire scene here. Use this.draw_box(graphics_state, model_transform) to call your helper.
-    
+
         // Call draw_fishtank to place fishtank into the world
         this.draw_fishtank(context, program_state, model_transform);
         
