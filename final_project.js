@@ -268,7 +268,7 @@ class Base_Scene extends Scene {
                 background: new Material(new Textured_Phong(), {
                     color: hex_color("#000000"),
                     ambient: 1, 
-                    texture: new Texture("assets/background.png"),
+                    texture: new Texture("assets/background.jpg"),
                 }),
         };
         // The white material and basic shader are used for drawing the outline.
@@ -295,7 +295,7 @@ class Base_Scene extends Scene {
 
       // *** Lights: *** Values of vector or point lights.
       const light_position = vec4(0, 35, 5, 1);
-      program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+      program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 500)];
   }
 }
 
@@ -315,6 +315,7 @@ export class Final_Project extends Base_Scene {
         // Initialize x and y with initial values
         this.x = 1;
         this.y = 1;
+
         this.scaling_factor = 1;
         this.movement_reduction = 1;
         this.vertical_reduction = 0;
@@ -329,6 +330,7 @@ export class Final_Project extends Base_Scene {
             // When button is pressed, increment x and y by 0.2, with a maximum of 1.8
             this.x = Math.min(this.x + 0.1, 1.8);
             this.y = Math.min(this.y + 0.01, 1.08)
+
             console.log("Growing by 0.1");
         });
 
@@ -394,6 +396,7 @@ export class Final_Project extends Base_Scene {
         glass_transform = glass_transform.times(Mat4.translation(0,0,-9));
         this.shapes.fishtank_back_glass.draw(context, program_state, glass_transform, this.materials.plastic.override(interpolated_color));
 
+        glass_transform = glass_transform.times(Mat4.scale(1 / this.x, 1 / this.y, 1));
         glass_transform = glass_transform.times(Mat4.translation(0, 5, -19));
         this.shapes.square.draw(context, program_state, glass_transform, this.materials.background);
 
