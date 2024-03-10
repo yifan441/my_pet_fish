@@ -315,6 +315,12 @@ export class Final_Project extends Base_Scene {
         // Initialize x and y with initial values
         this.x = 1;
         this.y = 1;
+        this.scaling_factor = 1;
+        this.movement_reduction = 1;
+        this.vertical_reduction = 0;
+        
+        this.fed_count = 0;
+        this.clean = 0;
     }
 
     make_control_panel() {
@@ -322,16 +328,24 @@ export class Final_Project extends Base_Scene {
         this.key_triggered_button("Grow Tank", ["g"], () => {
             // When button is pressed, increment x and y by 0.2, with a maximum of 1.8
             this.x = Math.min(this.x + 0.1, 1.8);
-
+            this.y = Math.min(this.y + 0.01, 1.08)
             console.log("Growing by 0.1");
         });
 
         this.key_triggered_button("Clean Tank", ["c"], () => {
-            console.log("Tank Fully Clean");
+            this.clean += 1;
         });
 
         this.key_triggered_button("Feed Fish", ["f"], () => {
-            console.log("Fish Fed");
+            if (this.fed_count == 4) {
+                console.log("Fish Fully Fed");
+            } else {
+                this.scaling_factor = Math.min(this.scaling_factor + 0.25, 2)
+                this.vertical_reduction = this.vertical_reduction + 0.75;
+                this.movement_reduction = this.movement_reduction * 0.75;
+                this.fed_count += 1;
+                console.log("Fish Fed");
+            }
         });
 
         this.key_triggered_button("Add Decoration", ["d"], () => {
@@ -354,10 +368,11 @@ export class Final_Project extends Base_Scene {
 
 
         // Calculate the interpolation factor based on time
-        let color_time = Math.min((program_state.animation_time / 100000), 1); // Animation time in seconds, mod 1 to keep it in the range [0, 1]
+        let color_time = Math.max(((program_state.animation_time / 100000) - this.clean) % 1, 0); // Animation time in seconds, mod 1 to keep it in the range [0, 1]
+
 
         // Interpolate between initial and final colors
-        const interpolated_color = initial_color.mix(final_color, color_time);
+        let interpolated_color = initial_color.mix(final_color, color_time);
 
         model_transform = model_transform.times(Mat4.scale(this.x, this.y, 1));
         // draw stone base (bottom)
@@ -402,10 +417,13 @@ export class Final_Project extends Base_Scene {
         const orange = hex_color("#00FF00");
 
         // Calculate fish's vertical movement based on sine wave function
-        const vertical_offset = 2 * this.x * Math.sin(2 * Math.PI * 0.5 * current_time / 1000) + Math.sin(2 * Math.PI * 0.5 * current_time / 3000);
+        const vertical_offset = 2 * this.movement_reduction * this.x * Math.sin(2 * Math.PI * 0.5 * current_time / 1000)
+         + Math.sin(2 * Math.PI * 0.5 * current_time / 3000) - this.vertical_reduction;
 
         // Calculate fish's horizontal movement based on cosine wave function
-        let horizontal_offset = 2 * this.x * (4 * Math.cos(2 * Math.PI * 0.5 * current_time / 2000) - 3 * Math.cos(3 * Math.PI * 0.5 * current_time / 2000) - 2 * Math.sin(0.5 * Math.PI * 3 * current_time / 1000)) + 3 * Math.sin(2 * Math.PI * 0.5 * current_time / 3000);
+        let horizontal_offset = 2 * this.movement_reduction * this.x * (4 * Math.cos(2 * Math.PI * 0.5 * current_time / 2000) 
+         - 3 * Math.cos(3 * Math.PI * 0.5 * current_time / 2000) - 2 * Math.sin(0.5 * Math.PI * 3 * current_time / 1000)) 
+         + 3 * Math.sin(2 * Math.PI * 0.5 * current_time / 3000);
 
         // Check for collisions with walls
         while (this.detect_collision_left(fish_transform, horizontal_offset) || this.detect_collision_right(fish_transform, horizontal_offset)) {
@@ -413,6 +431,7 @@ export class Final_Project extends Base_Scene {
             horizontal_offset += 5 * (current_time / 1000); // Gradually reverse direction
         }
         // Adjust the fish's position based on vertical and horizontal offsets
+        fish_transform = fish_transform.times(Mat4.scale(this.scaling_factor, this.scaling_factor, this.scaling_factor));
         fish_transform = fish_transform.times(Mat4.translation(horizontal_offset, 10 + vertical_offset, 0));
 
         // Draw the fish
