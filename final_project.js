@@ -255,7 +255,7 @@ class Base_Scene extends Scene {
             "fish2" : new Shape_From_File("assets/clownfish.obj"),
 
             // Text 
-            "text": new Text_Line(5),
+            "text": new Text_Line(25),
 
             // Background
             "square": new Square(),
@@ -435,14 +435,19 @@ export class Final_Project extends Base_Scene {
         
         this.fed_count = 0;
         this.clean = 0;
+
+        this.display_text = "";
     }
 
     make_control_panel() {
+        
+
         this.control_panel.innerHTML += "Purchase Upgrades<br>";
         this.new_line();
 
         this.key_triggered_button("Expand Tank - $25", ["g"], () => {
             this.expand_tank();
+
         });
         this.key_triggered_button("Add Decoration - $5", ["j"], () => {
             this.add_decoration();
@@ -457,10 +462,12 @@ export class Final_Project extends Base_Scene {
 
         this.control_panel.innerHTML += "Take care of your fish<br>";
         this.new_line();
-        this.key_triggered_button("Feed Fish - $2", ["f"], () => {
+        this.key_triggered_button("Feed Fish - $2", ["e"], () => {
             if (this.fed_count == 4) {
+                this.display_text = "Fish Fully Fed";
                 console.log("Fish Fully Fed");
             } else {
+                this.display_text = "Fish Fed";
                 this.scaling_factor = Math.min(this.scaling_factor + 0.25, 2)
                 this.vertical_reduction = this.vertical_reduction + 0.75;
                 this.movement_reduction = this.movement_reduction * 0.75;
@@ -469,6 +476,7 @@ export class Final_Project extends Base_Scene {
             }
         });
         this.key_triggered_button("Clean Tank - $5", ["c"], () => {
+            this.display_text = "Tank Cleaned";
             this.clean += 1;
         });
     }
@@ -677,20 +685,28 @@ export class Final_Project extends Base_Scene {
         this.shapes.text.draw(context, program_state, model_transform, this.materials.text_image);
     }
 
+    draw_displaytext(context, program_state, model_transform, t){
+        this.shapes.text.set_string(this.display_text, context.context);
+        this.shapes.text.draw(context, program_state, model_transform, this.materials.text_image);
+    }
+
     expand_tank(){
         // Check if the user has enough money
         if(this.money >= 25){
             // Check if tank dimension max has been reached
             if(this.x > 1.3){
+                this.display_text = "Tank Fully Upgraded";
                 console.log("You've already reached the max tank dimensions!");
             }
             else{
+                this.display_text = "Upgraded Tank Size!";
                 console.log('Expanding tank');
                 this.money -= 25;
                 this.x += 0.1
             }
         }
         else{
+            this.display_text = "You're Broke!";
             console.log('Not enough money...');
         }
     }
@@ -700,15 +716,18 @@ export class Final_Project extends Base_Scene {
         if(this.money >= 10){
             // Check if fish maximum has been reached
             if(this.fishCount === this.maxFishCount){
+                this.display_text = "Too Many Fish!";
                 console.log("You've already reached the max number of fish!");
             }
             else{
+                this.display_text = "Bought a Fish"
                 console.log('Bought a fish!');
                 this.money -= 10;
                 this.fishCount++;
             }
         }
         else{
+            this.display_text = "You're Broke!";
             console.log('Not enough money...');
         }
     }
@@ -718,15 +737,18 @@ export class Final_Project extends Base_Scene {
         if(this.money >= 5){
             // Check if decoration maximum has been reached
             if(this.decorationCount === this.maxDecorationCount){
+                this.display_text = "All Decorations Added";
                 console.log("You've already reached the max number of decorations!");
             }
             else{
+                this.display_text = "New Decoration Added!";
                 console.log('New decoration added!');
                 this.money -= 5;
                 this.decorationCount++;
             }
         }
         else{
+            this.display_text = "You're Broke!";
             console.log('Not enough money...');
         }
     }
@@ -741,6 +763,7 @@ export class Final_Project extends Base_Scene {
         let fish_transform = Mat4.identity();
         let money_transform = Mat4.identity().times(Mat4.translation(32,33,0));
         let test = Mat4.identity().times(Mat4.translation(0,4,0));
+        let display_text_transform = Mat4.identity().times(Mat4.translation(8,30,0));
 
         // Time
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
@@ -755,6 +778,9 @@ export class Final_Project extends Base_Scene {
 
         // Calculate Money 
         this.draw_money(context, program_state, money_transform, t);
+
+        // display text 
+        this.draw_displaytext(context, program_state, display_text_transform, t);
 
         this.shapes.grass.draw(context, program_state, test, this.materials.plastic.override(green));
     }
