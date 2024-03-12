@@ -274,6 +274,11 @@ class Base_Scene extends Scene {
                     ambient: 1, 
                     texture: new Texture("assets/background.jpg"),
                 }),
+                wall: new Material(new Textured_Phong(), {
+                    color: hex_color("#000000"),
+                    ambient: 1, 
+                    texture: new Texture("assets/texture.jpg"),
+                }),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
