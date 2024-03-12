@@ -1,5 +1,6 @@
 import { defs, tiny } from './examples/common.js';
 import { Text_Line } from './examples/text-demo.js';
+import { Shape_From_File } from './examples/obj-file-demo.js';
 
 
 const {
@@ -249,6 +250,9 @@ class Base_Scene extends Scene {
             "fish": new Fish(),
             "fishtank_back_glass": new Fishtank_Back_Glass(),
 
+            // Fish
+            "fish1" : new Shape_From_File("assets/Fish1.obj"),
+
             // Text 
             "text": new Text_Line(5),
 
@@ -274,10 +278,39 @@ class Base_Scene extends Scene {
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
 
-        // Variables 
+        // x_dir : RIGHT, LEFT
+        // y_dir : UP, DOWN, NONE
+
+        // Fish 1 
+        this.fish1 = {
+            id: 1,
+            coords: [0,4,10],
+            x_dir: "RIGHT",
+            y_dir: "UP",
+            x_speed: 0.2,
+            y_speed: 0.1
+        }
+
+        // Fish 2
+        this.fish2 = {
+            id: 2,
+            coords: [0,16,8],
+            x_dir: "LEFT",
+            y_dir: "DOWN",
+            x_speed: 0.09,
+            y_speed: 0.07
+        }
+
+        // Money 
         this.money = 0;
         this.lastUpdateTime = 0;
-      
+        this.moneyIncrement = 1;
+
+        // Decorations
+        this.decorations = [];
+        this.decorationCount = 0;
+
+        
   }
 
   display(context, program_state) {
@@ -304,12 +337,6 @@ class Base_Scene extends Scene {
 /////////////////////////////////////////////
 
 export class Final_Project extends Base_Scene {
-  /**
-   * This Scene object can be added to any display canvas.
-   * We isolate that code so it can be experimented with on its own.
-   * This gives you a very small code sandbox for editing a simple scene, and for
-   * experimenting with matrix transformations.
-   */
     constructor() {
         super();
         // Initialize x and y with initial values
@@ -325,19 +352,29 @@ export class Final_Project extends Base_Scene {
     }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("Grow Tank", ["g"], () => {
+        this.control_panel.innerHTML += "Purchase Upgrades<br>";
+        this.new_line();
+
+        this.key_triggered_button("Expand Tank", ["g"], () => {
             // When button is pressed, increment x and y by 0.2, with a maximum of 1.8
             this.x = Math.min(this.x + 0.1, 1.8);
             this.y = Math.min(this.y + 0.01, 1.08)
 
             console.log("Growing by 0.1");
         });
-
-        this.key_triggered_button("Clean Tank", ["c"], () => {
-            this.clean += 1;
+        this.key_triggered_button("Add Decoration", ["j"], () => {
+            console.log("Decoration Added");
+        });
+        this.key_triggered_button("Buy fish", ["h"], () => {
+            console.log("new fish added");
         });
 
+        this.new_line();
+        this.new_line();
+        this.new_line();
+
+        this.control_panel.innerHTML += "Take care of your fish<br>";
+        this.new_line();
         this.key_triggered_button("Feed Fish", ["f"], () => {
             if (this.fed_count == 4) {
                 console.log("Fish Fully Fed");
@@ -349,15 +386,9 @@ export class Final_Project extends Base_Scene {
                 console.log("Fish Fed");
             }
         });
-
-        this.key_triggered_button("Add Decoration", ["d"], () => {
-            console.log("Decoration Added");
+        this.key_triggered_button("Clean Tank", ["c"], () => {
+            this.clean += 1;
         });
-
-    }
-
-    draw_box(context, program_state, model_transform, material) {
-        this.shapes.cube.draw(context, program_state, model_transform, material)
     }
 
     draw_fishtank(context, program_state, model_transform){
@@ -402,22 +433,46 @@ export class Final_Project extends Base_Scene {
 
     }
 
-    detect_collision_left(fish_transform, horizontal_offset) {
-        const min_x = -25 * this.x + 1; // Adjusted for fish size and fish tank growth
-        const fish_x_position = fish_transform[0][3] + horizontal_offset; // Update fish x position with offset
+    detect_collision_horizontal(x_coordinate, horizontal_offset, direction){
+        let didCollide = false;
+        
+        if(direction === "RIGHT"){
+            const max_x = 25 * this.x - 6; // Adjusted for fish size and fish tank growth
+            const fish_x_position = x_coordinate + horizontal_offset; // Update fish x position with offset
 
-        return fish_x_position <= min_x;
-    }
-    
-    detect_collision_right(fish_transform, horizontal_offset) {
-        const max_x = 25 * this.x - 1; // Adjusted for fish size and fish tank growth
-        const fish_x_position = fish_transform[0][3] + horizontal_offset; // Update fish x position with offset
-    
-        return fish_x_position >= max_x;
+            didCollide = fish_x_position >= max_x;
+        }
+        if(direction === "LEFT"){
+            const min_x = -25 * this.x + 6; // Adjusted for fish size and fish tank growth
+            const fish_x_position = x_coordinate + horizontal_offset; // Update fish x position with offset
+
+            didCollide = fish_x_position <= min_x;
+        }
+
+        return didCollide;
     }
 
-    draw_fish(context, program_state, fish_transform, current_time) {
-        const orange = hex_color("#00FF00");
+    detect_collision_vertical(y_coordinate, vertical_offset, direction){
+        let didCollide = false;
+
+        if(direction === "UP"){
+            const max_y = 21;
+            const fish_y_position = y_coordinate + vertical_offset;
+
+            didCollide = fish_y_position >= max_y;
+        }
+        if(direction === "DOWN"){
+            const min_y = 3;
+            const fish_y_position = y_coordinate - vertical_offset;
+
+            didCollide = fish_y_position <= min_y;
+        }
+
+        return didCollide;
+    }
+
+    old_draw_fish(context, program_state, fish_transform, current_time) {
+        const orange = hex_color("#FFA500");
 
         // Calculate fish's vertical movement based on sine wave function
         const vertical_offset = 2 * this.movement_reduction * this.x * Math.sin(2 * Math.PI * 0.5 * current_time / 1000)
@@ -438,40 +493,144 @@ export class Final_Project extends Base_Scene {
         fish_transform = fish_transform.times(Mat4.translation(horizontal_offset, 10 + vertical_offset, 0));
 
         // Draw the fish
-        this.shapes.fish.draw(context, program_state, fish_transform, this.materials.plastic.override(orange));
+        this.shapes.fish1.draw(context, program_state, fish_transform, this.materials.plastic.override(orange));
 
         // Update fish position
         return fish_transform;
     }
 
+    //.times(Mat4.rotation(Math.PI/2,0,1,0))
+    draw_fish(context, program_state, fish_transform, current_time, fish) {
+        const orange = hex_color("#FFA500");
+
+        // Calculate horizontal offset
+        let x_offset = 0;
+
+        if(fish.x_dir === "RIGHT"){
+            if(this.detect_collision_horizontal(fish.coords[0], 0.1, "RIGHT")){
+                console.log('hit wall!'); 
+                fish.x_dir = "LEFT";
+            }
+            else{
+                x_offset = fish.x_speed;
+            }
+        }
+        if(fish.x_dir === "LEFT"){
+            if(this.detect_collision_horizontal(fish.coords[0], 0.1, "LEFT")){
+                console.log('hit wall!'); 
+                fish.x_dir = "RIGHT";
+            }
+            else{
+                x_offset = -fish.x_speed;
+            }
+        }
+
+        // Calculate vertical offset
+        let y_offset = 0;
+
+        if(fish.y_dir === "UP"){
+            if(this.detect_collision_vertical(fish.coords[1], 0.1, "UP")){
+                console.log('hit ceiling!');
+                fish.y_dir = "DOWN";
+            }
+            else{
+                y_offset = fish.y_speed;
+            }
+        }
+        if(fish.y_dir === "DOWN"){
+            if(this.detect_collision_vertical(fish.coords[1], 0.1, "DOWN")){
+                console.log('hit ceiling!');
+                fish.y_dir = "UP";
+            }
+            else{
+                y_offset = -fish.y_speed;
+            }
+        }
+
+
+        // Update fish coordinates
+        fish.coords[0] += x_offset;
+        fish.coords[1] += y_offset;
+
+
+        // Calculate fish transformation matrix
+        let facing_dir = fish.x_dir === "RIGHT" ? Math.PI/2 : -Math.PI/2; // direction fish is facing
+
+        fish_transform = fish_transform.times(Mat4.translation(fish.coords[0],fish.coords[1],fish.coords[2]))
+                                       .times(Mat4.scale(this.scaling_factor, this.scaling_factor, this.scaling_factor))
+                                       .times(Mat4.rotation(facing_dir,0,1,0));
+
+
+        // Draw the fish
+        this.shapes.fish1.draw(context, program_state, fish_transform, this.materials.plastic.override(orange));
+    }
+
+    // no longer needed
+    // 
+    // // Change fish directions
+    // change_fish_dir_horizontal(fish_number, new_dir){
+    //     if(fish_number === 1){
+    //         this.fish1.x_dir = new_dir;
+    //     }
+    // }
+
+    // change_fish_dir_vertical(fish_number, new_dir){
+    //     if(fish_number === 1){
+    //         this.fish1.y_dir = new_dir;
+    //     }
+    // }
+
+    // // Change fish coordinates
+    // change_fish_x(fish_number, x_offset){
+    //     if(fish_number === 1){
+    //         this.fish1.coords[0] += x_offset;
+    //     }
+    // }
+
+    // change_fish_y(fish_number, y_offset){
+    //     if(fish_number === 1){
+    //         this.fish1.coords[1] += y_offset;
+    //     }
+    // }
+
     draw_money(context, program_state, model_transform, t){
         const elapsedTime = t - this.lastUpdateTime;
 
         if(elapsedTime >= 1){
-            this.money += 1;
+            this.money += this.moneyIncrement;
             this.lastUpdateTime = t;
         }
 
-        let money_text = `$${this.money}`;
+        let money_text = this.money < 1000 ? `$${this.money}` : `$${Math.floor(this.money/1000)}.${Math.floor((this.money%1000)/100)}k`
+        
         this.shapes.text.set_string(money_text.toString(), context.context);
         this.shapes.text.draw(context, program_state, model_transform, this.materials.text_image);
     }
 
     display(context, program_state) {
         super.display(context, program_state);
-        const blue = hex_color("#1A9FFA");
+        const orange = hex_color("#FFA500");
+
+        // Transformation Matrices
         let model_transform = Mat4.identity();
         let fish_transform = Mat4.identity();
+        let fish2_transform = Mat4.identity();
         let money_transform = Mat4.identity().times(Mat4.translation(32,33,0));
-        const t = program_state.animation_time / 1000;
+
+        // Time
+        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // Call draw_fishtank to place fishtank into the world
         this.draw_fishtank(context, program_state, model_transform);
         
         // Call draw_fish to place fish into the world and pass the current time
-        fish_transform = this.draw_fish(context, program_state, fish_transform, program_state.animation_time);
+        this.draw_fish(context, program_state, fish_transform, t, this.fish1);
+        this.draw_fish(context, program_state, fish_transform, t, this.fish2);
 
         // Calculate Money 
         this.draw_money(context, program_state, money_transform, t);
+
+        //fish_transform = fish_transform.times(Mat4.translation(0,10,10)).times(Mat4.rotation(-Math.PI/2,0,1,0));
+
     }
 }

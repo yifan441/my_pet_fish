@@ -3,6 +3,7 @@ import { defs, tiny } from './examples/common.js';
 import { Transforms_Sandbox } from './examples/transforms-sandbox.js';
 import { Final_Project } from './final_project.js';
 import { Text_Demo } from './examples/text-demo.js';
+import { Obj_File_Demo } from './examples/obj-file-demo.js';
 // Pull these names into this module's scope for convenience:
 const {
   Vector,
@@ -34,7 +35,7 @@ const {
 
 const Minimal_Webgl_Demo = defs.Minimal_Webgl_Demo;
 
-Object.assign(defs, { Transforms_Sandbox }, {Final_Project}, {Text_Demo});
+Object.assign(defs, { Transforms_Sandbox }, {Final_Project}, {Text_Demo}, {Obj_File_Demo});
 
 // ******************** End extra step
 
