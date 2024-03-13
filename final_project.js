@@ -261,8 +261,13 @@ class Base_Scene extends Scene {
             "square": new Square(),
 
             // Decorations
-            "stone_wall" : new Shape_From_File("assets/TallWallBricks.obj"),
-            "grass" : new Shape_From_File("assets/Grass2.obj")
+            "grass1" : new Shape_From_File("assets/Grass1.obj"),
+            "grass2" : new Shape_From_File("assets/Grass2.obj"),
+            "flower" : new Shape_From_File("assets/Flowers_1.obj"),
+            "rock" : new Shape_From_File("assets/Rock1.obj"),
+            "coral1": new Shape_From_File("assets/Willow_Dead_1.obj"),
+            "coral2": new Shape_From_File("assets/Willow_Dead_2.obj"),
+            "kelp" : new Shape_From_File("assets/Corn_4.obj")
 
         };
 
@@ -392,9 +397,8 @@ class Base_Scene extends Scene {
         this.moneyIncrement = 1;
 
         // Decorations
-        this.decorationsArray = [];
         this.decorationCount = 0;
-        this.maxDecorationCount = this.decorationsArray.length;
+        this.maxDecorationCount = 5;
 
         
   }
@@ -428,6 +432,9 @@ export class Final_Project extends Base_Scene {
         // Initialize x and y with initial values
         this.x = 1;
         this.y = 1;
+
+        this.tank_right_x = 19;
+        this.tank_left_x = -19;
 
         this.scaling_factor = 1;
         this.movement_reduction = 1;
@@ -464,7 +471,7 @@ export class Final_Project extends Base_Scene {
         this.new_line();
         this.key_triggered_button("Feed Fish - $2", ["e"], () => {
             if (this.fed_count == 4) {
-                this.display_text = "Fish Fully Fed";
+                this.display_text = "Fish too fat! Go diet";
                 console.log("Fish Fully Fed");
             } else {
                 this.display_text = "Fish Fed";
@@ -472,12 +479,26 @@ export class Final_Project extends Base_Scene {
                 this.vertical_reduction = this.vertical_reduction + 0.75;
                 this.movement_reduction = this.movement_reduction * 0.75;
                 this.fed_count += 1;
+                this.money -= 2;
                 console.log("Fish Fed");
             }
         });
         this.key_triggered_button("Clean Tank - $5", ["c"], () => {
             this.display_text = "Tank Cleaned";
             this.clean += 1;
+            this.money -= 5;
+        });
+
+        this.new_line();
+        this.new_line();
+        this.new_line();
+
+        this.control_panel.innerHTML += "Customize your fish<br>";
+        this.new_line();
+
+        this.key_triggered_button("Change fish color - $5", ["k"], () => {
+            this.display_text = "fish color changed!";
+            this.money -= 5;
         });
     }
 
@@ -559,34 +580,6 @@ export class Final_Project extends Base_Scene {
         }
 
         return didCollide;
-    }
-
-    old_draw_fish(context, program_state, fish_transform, current_time) {
-        const orange = hex_color("#FFA500");
-
-        // Calculate fish's vertical movement based on sine wave function
-        const vertical_offset = 2 * this.movement_reduction * this.x * Math.sin(2 * Math.PI * 0.5 * current_time / 1000)
-         + Math.sin(2 * Math.PI * 0.5 * current_time / 3000) - this.vertical_reduction;
-
-        // Calculate fish's horizontal movement based on cosine wave function
-        let horizontal_offset = 2 * this.movement_reduction * this.x * (4 * Math.cos(2 * Math.PI * 0.5 * current_time / 2000) 
-         - 3 * Math.cos(3 * Math.PI * 0.5 * current_time / 2000) - 2 * Math.sin(0.5 * Math.PI * 3 * current_time / 1000)) 
-         + 3 * Math.sin(2 * Math.PI * 0.5 * current_time / 3000);
-
-        // Check for collisions with walls
-        while (this.detect_collision_left(fish_transform, horizontal_offset) || this.detect_collision_right(fish_transform, horizontal_offset)) {
-            // Gradually change direction upon collision with the wall
-            horizontal_offset += 5 * (current_time / 1000); // Gradually reverse direction
-        }
-        // Adjust the fish's position based on vertical and horizontal offsets
-        fish_transform = fish_transform.times(Mat4.scale(this.scaling_factor, this.scaling_factor, this.scaling_factor));
-        fish_transform = fish_transform.times(Mat4.translation(horizontal_offset, 10 + vertical_offset, 0));
-
-        // Draw the fish
-        this.shapes.fish1.draw(context, program_state, fish_transform, this.materials.plastic.override(orange));
-
-        // Update fish position
-        return fish_transform;
     }
 
     draw_fish(context, program_state, fish_transform, current_time, fish) {
@@ -671,6 +664,167 @@ export class Final_Project extends Base_Scene {
         this.shapes.fish2.draw(context, program_state, fish_transform, materials);
     }
 
+    draw_decoration(context, program_state, model_transform, t){
+        if(this.decorationCount >= 1){
+            this.draw_grass(context, program_state, model_transform, t);
+        }
+        if(this.decorationCount >= 2){
+            this.draw_coral(context, program_state, model_transform, t);
+        }
+        if(this.decorationCount >= 3){
+            this.draw_flowers(context, program_state, model_transform, t)
+        }
+        if(this.decorationCount >= 4){
+            this.draw_rock(context, program_state, model_transform);
+        }
+        if(this.decorationCount >= 5){
+            this.draw_kelp(context, program_state, model_transform, t);
+        }
+    }
+
+    draw_grass(context, program_state, model_transform, t){
+        const green = hex_color("#00FF00");
+        const maxAngle = .05*Math.PI;
+
+        let angle = (maxAngle / 2) * Math.sin((2 * Math.PI / 3) * t);
+
+        for(let i = this.tank_right_x; i !== this.tank_left_x - 1; i--){
+            if(i%4 === 0){
+                let temp = model_transform.times(Mat4.translation(i,0,-6))
+                                          .times(Mat4.rotation(angle, 0, 0, 1))
+                                          .times(Mat4.scale(1,1.5,1));
+                this.shapes.grass1.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+            else{
+                let temp = model_transform.times(Mat4.translation(i,0,-4))
+                                          .times(Mat4.rotation(angle, 0, 0, 1));
+                this.shapes.grass2.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+        }
+        for(let i = this.tank_right_x; i !== this.tank_left_x - 1; i--){
+            if(i%2 === 0){
+                let temp = model_transform.times(Mat4.translation(i,0,4))
+                                          .times(Mat4.rotation(angle, 0, 0, 1));
+                this.shapes.grass1.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+            else{
+                let temp = model_transform.times(Mat4.translation(i,0,0))
+                                          .times(Mat4.rotation(-angle, 0, 0, 1));
+                this.shapes.grass2.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+        }
+        for(let i = this.tank_right_x; i !== this.tank_left_x - 1; i--){
+            if(i%3 === 0){
+                let temp = model_transform.times(Mat4.translation(i,0,7))
+                                          .times(Mat4.rotation(angle, 0, 0, 1))
+                                          .times(Mat4.scale(1,0.5,1));
+                this.shapes.grass2.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+            else{
+                let temp = model_transform.times(Mat4.translation(i,0,8))
+                                          .times(Mat4.rotation(-angle, 0, 0, 1))
+                                          .times(Mat4.scale(1,0.5,1));
+                this.shapes.grass2.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+        }
+        for(let i = this.tank_right_x; i !== this.tank_left_x - 1; i--){
+            if(i%2 === 0){
+                let temp = model_transform.times(Mat4.translation(i,0,12))
+                                          .times(Mat4.rotation(angle, 0, 0, 1));
+                this.shapes.grass2.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+            else{
+                let temp = model_transform.times(Mat4.translation(i,0,10))
+                                          .times(Mat4.rotation(-angle, 0, 0, 1));
+                this.shapes.grass2.draw(context, program_state, temp, this.materials.plastic.override(green));
+            }
+        }
+
+    }
+
+    draw_coral(context, program_state, model_transform, t){
+        const red = hex_color("#c44025");
+        const pink = hex_color("#FFC0CB");
+
+        const maxAngle = .02*Math.PI;
+        let angle = (maxAngle / 2) * Math.sin((2 * Math.PI / 3) * t);
+
+        let temp1 = model_transform.times(Mat4.translation(this.tank_left_x,3,-3))
+                                   .times(Mat4.rotation(angle, 0, 0, 1))
+                                   .times(Mat4.scale(4,4,4));
+        this.shapes.coral1.draw(context, program_state, temp1, this.materials.plastic.override(red));
+
+        let temp2 = model_transform.times(Mat4.translation(this.tank_left_x + 5,3,-5))
+                                   .times(Mat4.rotation(-angle, 0, 0, 1))
+                                   .times(Mat4.scale(4,3,4));
+        this.shapes.coral1.draw(context, program_state, temp2, this.materials.plastic.override(red));
+
+
+        let temp3 = model_transform.times(Mat4.translation(this.tank_left_x + 10,1,1))
+                                   .times(Mat4.rotation(-angle, 0, 0, 1))
+                                   .times(Mat4.scale(3,3,3));
+        this.shapes.coral2.draw(context, program_state, temp3, this.materials.plastic.override(pink));
+    }
+
+    draw_flowers(context, program_state, model_transform, t){
+        const purple = hex_color("#d5aff0");
+
+        const maxAngle = .02*Math.PI;
+        let angle = (maxAngle / 2) * Math.sin((2 * Math.PI / 3) * t);
+
+        let temp1 = model_transform.times(Mat4.translation(0,2,6))
+                                         .times(Mat4.rotation(angle, 0, 0, 1))
+                                         .times(Mat4.scale(1.5,2,1));
+        this.shapes.flower.draw(context, program_state, temp1, this.materials.plastic.override(purple));
+
+        let temp2 = model_transform.times(Mat4.translation(14,1.5,10))
+                                   .times(Mat4.rotation(angle, 0, 0, 1))
+                                   .times(Mat4.scale(1.5,1.5,1));
+        this.shapes.flower.draw(context, program_state, temp2, this.materials.plastic.override(purple));
+
+        let temp3 = model_transform.times(Mat4.translation(-14,1,10))
+                                   .times(Mat4.rotation(angle, 0, 0, 1))
+                                   .times(Mat4.scale(1.5,1.5,1));
+        this.shapes.flower.draw(context, program_state, temp3, this.materials.plastic.override(purple));
+
+        let temp4 = model_transform.times(Mat4.translation(10,2,0))
+                                   .times(Mat4.rotation(angle, 0, 0, 1))
+                                   .times(Mat4.scale(1.5,2,1));
+        this.shapes.flower.draw(context, program_state, temp4, this.materials.plastic.override(purple));
+
+    }
+
+    draw_rock(context, program_state, model_transform){
+        const brown = hex_color("#ab825e");
+
+        let temp = model_transform.times(Mat4.translation(this.tank_right_x - 2,0,-10))
+                                  .times(Mat4.scale(8,7,4));
+
+        this.shapes.rock.draw(context, program_state, temp, this.materials.plastic.override(brown));
+    }
+
+    draw_kelp(context, program_state, model_transform, t){
+        const dark_green = hex_color("#1a7523");
+
+        const maxAngle = .01*Math.PI;
+        let angle = (maxAngle / 2) * Math.sin((2 * Math.PI / 3) * t);
+
+        let temp1 = model_transform.times(Mat4.translation(10,6,-7))
+                                   .times(Mat4.rotation(angle, 0, 0, 1))
+                                   .times(Mat4.scale(4,3,3));
+        this.shapes.kelp.draw(context, program_state, temp1, this.materials.plastic.override(dark_green));
+
+        let temp2 = model_transform.times(Mat4.translation(-17,6,-9))
+                                   .times(Mat4.rotation(angle, 0, 0, 1))
+                                   .times(Mat4.scale(4,4,3));
+        this.shapes.kelp.draw(context, program_state, temp2, this.materials.plastic.override(dark_green));
+
+        let temp3 = model_transform.times(Mat4.translation(18,3,-5))
+                                   .times(Mat4.rotation(-angle, 0, 0, 1))
+                                   .times(Mat4.scale(3,2,2));
+        this.shapes.kelp.draw(context, program_state, temp3, this.materials.plastic.override(dark_green));
+    }
+
     draw_money(context, program_state, model_transform, t){
         const elapsedTime = t - this.lastUpdateTime;
 
@@ -703,10 +857,12 @@ export class Final_Project extends Base_Scene {
                 console.log('Expanding tank');
                 this.money -= 25;
                 this.x += 0.1
+                this.tank_right_x += 2;
+                this.tank_left_x -= 2;
             }
         }
         else{
-            this.display_text = "You're Broke!";
+            this.display_text = "You're broke! Get job!";
             console.log('Not enough money...');
         }
     }
@@ -727,7 +883,7 @@ export class Final_Project extends Base_Scene {
             }
         }
         else{
-            this.display_text = "You're Broke!";
+            this.display_text = "You're broke! Get job!";
             console.log('Not enough money...');
         }
     }
@@ -748,7 +904,7 @@ export class Final_Project extends Base_Scene {
             }
         }
         else{
-            this.display_text = "You're Broke!";
+            this.display_text = "You're broke! Get job!";
             console.log('Not enough money...');
         }
     }
@@ -757,12 +913,13 @@ export class Final_Project extends Base_Scene {
         super.display(context, program_state);
         const orange = hex_color("#FFA500");
         const green = hex_color("#00FF00");
+        const pink = hex_color("#FFC0CB");
 
         // Transformation Matrices
         let fishtank_transform = Mat4.identity();
         let fish_transform = Mat4.identity();
         let money_transform = Mat4.identity().times(Mat4.translation(32,33,0));
-        let test = Mat4.identity().times(Mat4.translation(0,4,0));
+        let decoration_transform = Mat4.identity().times(Mat4.translation(0,4,0));
         let display_text_transform = Mat4.identity().times(Mat4.translation(8,30,0));
 
         // Time
@@ -776,12 +933,13 @@ export class Final_Project extends Base_Scene {
             this.draw_fish(context, program_state, fish_transform, t, this.fishArray[i]);
         }
 
+        // Call draw_decoration() to place decorations into the world 
+        this.draw_decoration(context, program_state, decoration_transform, t);
+
         // Calculate Money 
         this.draw_money(context, program_state, money_transform, t);
 
         // display text 
         this.draw_displaytext(context, program_state, display_text_transform, t);
-
-        this.shapes.grass.draw(context, program_state, test, this.materials.plastic.override(green));
     }
 }
