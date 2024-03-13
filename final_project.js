@@ -305,7 +305,8 @@ class Base_Scene extends Scene {
                 y_dir: "UP", // y_dir : UP, DOWN, NONE
                 x_speed: 0.1,
                 y_speed: 0.09,
-                type: 1
+                type: 1,
+                last_update_time: 0
             },
             {// Fish 2
                 id: 2,
@@ -314,16 +315,18 @@ class Base_Scene extends Scene {
                 y_dir: "DOWN",
                 x_speed: 0.09,
                 y_speed: 0.07,
-                type: 1
+                type: 1,
+                last_update_time: 0
             },
             { // Fish 3
                 id: 3,
                 coords: [5,10,6],
                 x_dir: "LEFT",
-                y_dir: "UP",
+                y_dir: "NONE",
                 x_speed: 0.05,
                 y_speed: 0.05,
-                type: 2
+                type: 2,
+                last_update_time: 0
             },
             { // Fish 4
                 id: 4,
@@ -332,7 +335,8 @@ class Base_Scene extends Scene {
                 y_dir: "DOWN",
                 x_speed: 0.15,
                 y_speed: 0.1,
-                type: 2
+                type: 2,
+                last_update_time: 0
             },
             { // Fish 5
                 id: 5,
@@ -341,16 +345,18 @@ class Base_Scene extends Scene {
                 y_dir: "DOWN",
                 x_speed: 0.1,
                 y_speed: 0.07,
-                type: 1
+                type: 1,
+                last_update_time: 0
             },
             { // Fish 6
                 id: 6,
                 coords: [15,12,0],
                 x_dir: "RIGHT",
-                y_dir: "UP",
+                y_dir: "NONE",
                 x_speed: 0.1,
                 y_speed: 0.08,
-                type: 1
+                type: 1,
+                last_update_time: 0
             },
             { // Fish 7
                 id: 7,
@@ -359,7 +365,8 @@ class Base_Scene extends Scene {
                 y_dir: "DOWN",
                 x_speed: 0.07,
                 y_speed: 0.05,
-                type: 2
+                type: 2,
+                last_update_time: 0
             },
             { // Fish 8
                 id: 8,
@@ -368,16 +375,18 @@ class Base_Scene extends Scene {
                 y_dir: "UP",
                 x_speed: 0.07,
                 y_speed: 0.05,
-                type: 2
+                type: 2,
+                last_update_time: 0
             },
             { // Fish 9
                 id: 9,
                 coords: [2,16,-6],
                 x_dir: "LEFT",
-                y_dir: "DOWN",
+                y_dir: "NONE",
                 x_speed: 0.16,
                 y_speed: 0.12,
-                type: 1
+                type: 1,
+                last_update_time: 0
             },
             { // Fish 10
                 id: 10,
@@ -386,14 +395,16 @@ class Base_Scene extends Scene {
                 y_dir: "UP",
                 x_speed: 0.16,
                 y_speed: 0.12,
-                type: 2
+                type: 2,
+                last_update_time: 0
             }
         ];
         this.maxFishCount = this.fishArray.length;
+        this.lastFishUpdateTime = 0;
 
         // Money 
-        this.money = 100;
-        this.lastUpdateTime = 0;
+        this.money = 200;
+        this.lastMoneyUpdateTime = 0;
         this.moneyIncrement = 1;
 
         // Decorations
@@ -504,8 +515,8 @@ export class Final_Project extends Base_Scene {
 
     draw_fishtank(context, program_state, model_transform){
         // colors
-        const grey = hex_color("#D6D9DA");
-        const dark_grey = hex_color("99A0A3")
+        const light_yellow = hex_color("#f6d7b0");
+        const blue = hex_color("#6495ED")
         // fish tank background color 
         const initial_color = hex_color("#6495ED"); // Initial color (blue)
         const final_color = hex_color("#8B4513");   // Final color (brown)
@@ -520,15 +531,15 @@ export class Final_Project extends Base_Scene {
 
         model_transform = model_transform.times(Mat4.scale(this.x, this.y, 1));
         // draw stone base (bottom)
-        this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(grey));
+        this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(light_yellow));
 
 
         // draw stone walls (left/right)
         let wall_transform = model_transform;
         wall_transform = wall_transform.times(Mat4.translation(-25,12,0));
-        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
+        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(blue));
         wall_transform = wall_transform.times(Mat4.translation(50,0,0));
-        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(dark_grey));
+        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(blue));
 
         // draw glass panels (front/back)
         let glass_transform = model_transform;
@@ -582,8 +593,15 @@ export class Final_Project extends Base_Scene {
         return didCollide;
     }
 
-    draw_fish(context, program_state, fish_transform, current_time, fish) {
+    draw_fish(context, program_state, fish_transform, t, fish) {
         const orange = hex_color("#FFA500");
+
+        // randomly change fish direction every 2 seconds
+        const elapsedTime = t - fish.last_update_time;
+        if(elapsedTime >= 2){
+            this.randomly_change_fish_dir(fish);
+            fish.last_update_time = t;
+        }
 
         // Calculate horizontal offset
         let x_offset = 0;
@@ -628,6 +646,9 @@ export class Final_Project extends Base_Scene {
                 y_offset = -fish.y_speed;
             }
         }
+        if(fish.y_dir === "NONE"){
+            y_offset = 0;
+        }
 
 
         // Update fish coordinates
@@ -662,6 +683,31 @@ export class Final_Project extends Base_Scene {
     // Draws fish type 2
     draw_fish_type_2(context, program_state, fish_transform, materials){
         this.shapes.fish2.draw(context, program_state, fish_transform, materials);
+    }
+
+    randomly_change_fish_dir(fishObj){
+        // randomly change horizontal direction
+        let rand_x = Math.floor(Math.random() * 2) + 1;
+        
+        if(rand_x === 1){
+            fishObj.x_dir = "LEFT";
+        }
+        else{
+            fishObj.x_dir = "RIGHT";
+        }
+
+        // randomly change vertical direction
+        let rand_y = Math.floor(Math.random() * 3);
+
+        if(rand_y === 0){
+            fishObj.y_dir = "NONE";
+        }
+        else if (rand_y === 1){
+            fishObj.y_dir = "UP";
+        }
+        else{
+            fishObj.y_dir = "DOWN";
+        }
     }
 
     draw_decoration(context, program_state, model_transform, t){
@@ -826,11 +872,11 @@ export class Final_Project extends Base_Scene {
     }
 
     draw_money(context, program_state, model_transform, t){
-        const elapsedTime = t - this.lastUpdateTime;
+        const elapsedTime = t - this.lastMoneyUpdateTime;
 
         if(elapsedTime >= 1){
             this.money += this.moneyIncrement;
-            this.lastUpdateTime = t;
+            this.lastMoneyUpdateTime = t;
         }
 
         let money_text = this.money < 1000 ? `$${this.money}` : `$${Math.floor(this.money/1000)}.${Math.floor((this.money%1000)/100)}k`
