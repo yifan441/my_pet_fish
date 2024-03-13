@@ -417,7 +417,7 @@ class Base_Scene extends Scene {
 
 
         // Money 
-        this.money = 200;
+        this.money = 1000;
         this.lastMoneyUpdateTime = 0;
         this.moneyIncrement = 1;
 
@@ -425,7 +425,8 @@ class Base_Scene extends Scene {
         this.decorationCount = 0;
         this.maxDecorationCount = 5;
 
-        
+        // Fish Tank
+        this.fishtankLastUpdated = Infinity;
   }
 
   display(context, program_state) {
@@ -527,7 +528,7 @@ export class Final_Project extends Base_Scene {
 
     ////////////// FISH TANK ////////////////
 
-    draw_fishtank(context, program_state, model_transform){
+    draw_fishtank(context, program_state, model_transform, t){
         // colors
         const light_yellow = hex_color("#f6d7b0");
         const blue = hex_color("#6495ED")
@@ -538,6 +539,19 @@ export class Final_Project extends Base_Scene {
 
         // Calculate the interpolation factor based on time
         let color_time = Math.max(((program_state.animation_time / 100000) - this.clean) % 1, 0); // Animation time in seconds, mod 1 to keep it in the range [0, 1]
+
+        // Kill fish if tank is dirty for too long
+        if(color_time >= 0.8){
+            this.display_text = "Clean your tank now!";
+        }
+        if(color_time >= 0.85){
+            this.display_text = "I warned you...";
+        }
+        if(color_time >= 0.9){
+            this.display_text = "";
+            this.killFish = true;
+            this.fishtankLastUpdated = t; 
+        }
 
 
         // Interpolate between initial and final colors
@@ -551,9 +565,9 @@ export class Final_Project extends Base_Scene {
         // draw stone walls (left/right)
         let wall_transform = model_transform;
         wall_transform = wall_transform.times(Mat4.translation(-25,12,0));
-        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(blue));
+        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(interpolated_color));
         wall_transform = wall_transform.times(Mat4.translation(50,0,0));
-        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(blue));
+        this.shapes.fishtank_wall.draw(context, program_state, wall_transform, this.materials.plastic.override(interpolated_color));
 
         // draw glass panels (front/back)
         let glass_transform = model_transform;
@@ -1041,7 +1055,7 @@ export class Final_Project extends Base_Scene {
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         // Call draw_fishtank to place fishtank into the world
-        this.draw_fishtank(context, program_state, fishtank_transform);
+        this.draw_fishtank(context, program_state, fishtank_transform, t);
         
         // Call draw_fish() to place fish into the world
         for(let i = 0; i < this.fishCount; i++){
