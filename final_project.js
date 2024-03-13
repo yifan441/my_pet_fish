@@ -274,7 +274,7 @@ class Base_Scene extends Scene {
         // *** Materials
         this.materials = {
                 plastic: new Material(new defs.Phong_Shader(),
-                    {ambient: .6, diffusivity: .6, color: hex_color("#ffffff")
+                    {ambient: .65, diffusivity: .6, color: hex_color("#ffffff")
                 }),
                 text_image: new Material(new Textured_Phong(1), {
                     ambient: 1, diffusivity: 0, specularity: 0,
@@ -443,7 +443,7 @@ class Base_Scene extends Scene {
           Math.PI / 4, context.width / context.height, 1, 100);
 
       // *** Lights: *** Values of vector or point lights.
-      const light_position = vec4(0, 35, 5, 1);
+      const light_position = vec4(0, 30, 5, 1);
       program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 500)];
   }
 }
@@ -500,15 +500,20 @@ export class Final_Project extends Base_Scene {
         this.control_panel.innerHTML += "Take care of your fish<br>";
         this.new_line();
         this.key_triggered_button("Feed Fish - $2", ["e"], () => {
-            if (this.fed_count == 4) {
-                this.display_text = "Fish too fat! Go diet";
-            } else {
-                this.display_text = "Fish Fed";
-                this.fish_scaling_factor = Math.min(this.fish_scaling_factor + 0.25, 2)
-                this.fed_count += 1;
-                this.money -= 2;
-                this.x_boundary += 1;
-                this.y_boundary += 1.75;
+            if(this.fishCount > 0 ){
+                if (this.fed_count == 4) {
+                    this.display_text = "Fish too fat! Go diet";
+                } else {
+                    this.display_text = "Fish Fed";
+                    this.fish_scaling_factor = Math.min(this.fish_scaling_factor + 0.25, 2)
+                    this.fed_count += 1;
+                    this.money -= 2;
+                    this.x_boundary += 1;
+                    this.y_boundary += 1.75;
+                }
+            }
+            else{
+                this.display_text = "No fish to feed";
             }
         });
         this.key_triggered_button("Clean Tank - $5", ["c"], () => {
@@ -541,13 +546,13 @@ export class Final_Project extends Base_Scene {
         let color_time = Math.max(((program_state.animation_time / 100000) - this.clean) % 1, 0); // Animation time in seconds, mod 1 to keep it in the range [0, 1]
 
         // Kill fish if tank is dirty for too long
-        if(color_time >= 0.8){
+        if(color_time >= 0.7){
             this.display_text = "Clean your tank now!";
         }
-        if(color_time >= 0.85){
+        if(color_time >= 0.75){
             this.display_text = "I warned you...";
         }
-        if(color_time >= 0.9){
+        if(color_time >= 0.8){
             this.display_text = "";
             this.killFish = true;
             this.fishtankLastUpdated = t; 
@@ -560,6 +565,11 @@ export class Final_Project extends Base_Scene {
         model_transform = model_transform.times(Mat4.scale(this.tank_x_scale, this.tank_y_scale, 1));
         // draw stone base (bottom)
         this.shapes.fishtank_base.draw(context, program_state, model_transform, this.materials.plastic.override(light_yellow));
+
+        // draw top cover 
+        let top_transform = model_transform.times(Mat4.translation(0,23,0))
+                                           .times(Mat4.scale(1, .5, 1));
+        this.shapes.fishtank_base.draw(context, program_state, top_transform, this.materials.plastic.override(interpolated_color));
 
 
         // draw stone walls (left/right)
