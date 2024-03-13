@@ -267,14 +267,15 @@ class Base_Scene extends Scene {
             "rock" : new Shape_From_File("assets/Rock1.obj"),
             "coral1": new Shape_From_File("assets/Willow_Dead_1.obj"),
             "coral2": new Shape_From_File("assets/Willow_Dead_2.obj"),
-            "kelp" : new Shape_From_File("assets/Corn_4.obj")
+            "kelp" : new Shape_From_File("assets/Corn_4.obj"),
 
         };
+
 
         // *** Materials
         this.materials = {
                 plastic: new Material(new defs.Phong_Shader(),
-                    {ambient: .65, diffusivity: .6, color: hex_color("#ffffff")
+                    {ambient: .6, diffusivity: .6, color: hex_color("#ffffff")
                 }),
                 text_image: new Material(new Textured_Phong(1), {
                     ambient: 1, diffusivity: 0, specularity: 0,
@@ -427,12 +428,15 @@ class Base_Scene extends Scene {
 
         // Fish Tank
         this.fishtankLastUpdated = Infinity;
+
+        // Music 
+        this.background_music = new Audio("assets/aquarium-fish-132518.mp3");
+        
   }
 
   display(context, program_state) {
       // display():  Called once per frame of animation. Here, the base class's display only does
       // some initial setup.
-
       // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
       if (!context.scratchpad.controls) {
           this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
@@ -445,6 +449,9 @@ class Base_Scene extends Scene {
       // *** Lights: *** Values of vector or point lights.
       const light_position = vec4(0, 30, 5, 1);
       program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 500)];
+
+      // Music 
+      this.background_music.play();
   }
 }
 
@@ -783,7 +790,6 @@ export class Final_Project extends Base_Scene {
                                        .times(Mat4.rotation(facing_dir, 0, 1, 0))
                                        .times(Mat4.rotation(flip_angle, 0, 0, 1));
 
-                                       // TODO:
         
         // Draw the fish
         // call either draw_fish_1() or draw_fish_2()
