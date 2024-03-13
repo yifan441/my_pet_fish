@@ -297,18 +297,19 @@ class Base_Scene extends Scene {
 
         
         // Fish 
-        this.fishCount = 1;
+        this.fishCount = 10;
         this.fishArray = [
             {// Fish 1
                 id: 1,
                 coords: [0,4,10],
                 x_dir: "RIGHT", // x_dir : RIGHT, LEFT, NONE
                 y_dir: "UP", // y_dir : UP, DOWN, NONE
-                x_speed: 0.1,
-                y_speed: 0.09,
+                x_speed: 0.05,
+                y_speed: 0.04,
                 type: 1,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#FFA500"
             },
             {// Fish 2
                 id: 2,
@@ -319,7 +320,8 @@ class Base_Scene extends Scene {
                 y_speed: 0.07,
                 type: 1,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#00ffb5"
             },
             { // Fish 3
                 id: 3,
@@ -330,40 +332,44 @@ class Base_Scene extends Scene {
                 y_speed: 0.05,
                 type: 2,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#FAA0A0"
             },
             { // Fish 4
                 id: 4,
                 coords: [-3,19,4],
                 x_dir: "RIGHT",
                 y_dir: "DOWN",
-                x_speed: 0.15,
-                y_speed: 0.1,
+                x_speed: 0.1,
+                y_speed: 0.09,
                 type: 2,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#FDDA0D"
             },
             { // Fish 5
                 id: 5,
                 coords: [17,5,2],
                 x_dir: "LEFT",
                 y_dir: "DOWN",
-                x_speed: 0.1,
-                y_speed: 0.07,
+                x_speed: 0.06,
+                y_speed: 0.04,
                 type: 1,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#E0B0FF"
             },
             { // Fish 6
                 id: 6,
                 coords: [15,12,0],
                 x_dir: "RIGHT",
                 y_dir: "NONE",
-                x_speed: 0.1,
-                y_speed: 0.08,
+                x_speed: 0.06,
+                y_speed: 0.05,
                 type: 1,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#FA5F55"
             },
             { // Fish 7
                 id: 7,
@@ -374,7 +380,8 @@ class Base_Scene extends Scene {
                 y_speed: 0.05,
                 type: 2,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#FDDA0D"
             },
             { // Fish 8
                 id: 8,
@@ -385,29 +392,32 @@ class Base_Scene extends Scene {
                 y_speed: 0.05,
                 type: 2,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#E0B0FF"
             },
             { // Fish 9
                 id: 9,
                 coords: [2,16,-6],
                 x_dir: "LEFT",
                 y_dir: "NONE",
-                x_speed: 0.16,
-                y_speed: 0.12,
+                x_speed: 0.09,
+                y_speed: 0.07,
                 type: 1,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#FFA500"
             },
             { // Fish 10
                 id: 10,
                 coords: [-14,5,-8],
                 x_dir: "RIGHT",
                 y_dir: "UP",
-                x_speed: 0.16,
-                y_speed: 0.12,
+                x_speed: 0.09,
+                y_speed: 0.08,
                 type: 2,
                 last_update_time: 0,
-                floated: false
+                floated: false,
+                colour: "#4CBB17"
             }
         ];
         this.maxFishCount = this.fishArray.length;
@@ -516,7 +526,7 @@ export class Final_Project extends Base_Scene {
                     this.fed_count += 1;
                     this.money -= 2;
                     this.x_boundary += 1;
-                    this.y_boundary += 1.75;
+                    this.y_boundary += .5;
                 }
             }
             else{
@@ -627,13 +637,13 @@ export class Final_Project extends Base_Scene {
 
         if(direction === "UP"){
             const max_y = 21;
-            const fish_y_position = y_coordinate + vertical_offset;
+            const fish_y_position = y_coordinate + vertical_offset + this.y_boundary;
 
             didCollide = fish_y_position >= max_y;
         }
         if(direction === "DOWN"){
             const min_y = 3;
-            const fish_y_position = y_coordinate - vertical_offset;
+            const fish_y_position = y_coordinate - vertical_offset - this.y_boundary;
 
             didCollide = fish_y_position <= min_y;
         }
@@ -645,7 +655,7 @@ export class Final_Project extends Base_Scene {
     ////////////// FISH  ////////////////
 
     draw_fish(context, program_state, fish_transform, t, fish) {
-        const orange = hex_color("#FFA500");
+        const fishColour = hex_color(fish.colour);
 
         // randomly change fish direction every 2 seconds
         const elapsedTime = t - fish.last_update_time;
@@ -717,10 +727,10 @@ export class Final_Project extends Base_Scene {
         // Draw the fish
         // call either draw_fish_1() or draw_fish_2()
         if(fish.type === 1){
-            this.draw_fish_type_1(context, program_state, fish_transform, this.materials.plastic.override(orange));
+            this.draw_fish_type_1(context, program_state, fish_transform, this.materials.plastic.override(fishColour));
         }
         else{
-            this.draw_fish_type_2(context, program_state, fish_transform, this.materials.plastic.override(orange));
+            this.draw_fish_type_2(context, program_state, fish_transform, this.materials.plastic.override(fishColour));
         }
     }
 
@@ -766,7 +776,7 @@ export class Final_Project extends Base_Scene {
     }
 
     kill_fish(context, program_state, fish_transform, t, fish){
-        const orange = hex_color("#FFA500");
+        const fishColour = hex_color(fish.colour);
 
 
         let y_offset = 0;
@@ -798,10 +808,10 @@ export class Final_Project extends Base_Scene {
         }
         else{
             if(fish.type === 1){
-                this.draw_fish_type_1(context, program_state, fish_transform, this.materials.plastic.override(orange));
+                this.draw_fish_type_1(context, program_state, fish_transform, this.materials.plastic.override(fishColour));
             }
             else{
-                this.draw_fish_type_2(context, program_state, fish_transform, this.materials.plastic.override(orange));
+                this.draw_fish_type_2(context, program_state, fish_transform, this.materials.plastic.override(fishColour));
             }
         } 
     }
