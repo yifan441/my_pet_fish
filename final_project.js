@@ -297,7 +297,7 @@ class Base_Scene extends Scene {
 
         
         // Fish 
-        this.fishCount = 10;
+        this.fishCount = 1;
         this.fishArray = [
             {// Fish 1
                 id: 1,
@@ -428,16 +428,13 @@ class Base_Scene extends Scene {
 
 
         // Money 
-        this.money = 1000;
+        this.money = 0;
         this.lastMoneyUpdateTime = 0;
         this.moneyIncrement = 1;
 
         // Decorations
         this.decorationCount = 0;
         this.maxDecorationCount = 5;
-
-        // Fish Tank
-        this.fishtankLastUpdated = Infinity;
 
         // Music 
         this.background_music = new Audio("assets/aquarium-fish-132518.mp3");
@@ -543,9 +540,17 @@ export class Final_Project extends Base_Scene {
         this.new_line();
         this.new_line();
 
-        this.key_triggered_button("kill fish (demo purposes)", ["l"], () => {
+        this.control_panel.innerHTML += "For demo purposes<br>";
+        this.key_triggered_button("kill fish", ["l"], () => {
             this.killFish = true;
         });
+        this.key_triggered_button("add money", ["p"], () => {
+            this.money = 1000;
+        });
+        // TODO: add color_time fast forwarder
+        // this.key_triggered_button("make tank dirty", ["i"], () => {
+        //     this.color_time = 0.68;
+        // });
     }
 
     ////////////// FISH TANK ////////////////
@@ -572,7 +577,6 @@ export class Final_Project extends Base_Scene {
         if(color_time >= 0.8){
             this.display_text = "";
             this.killFish = true;
-            this.fishtankLastUpdated = t; 
         }
 
 
