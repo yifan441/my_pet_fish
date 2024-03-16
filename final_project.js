@@ -568,13 +568,13 @@ export class Final_Project extends Base_Scene {
         let color_time = Math.max(((program_state.animation_time / 100000) - this.clean) % 1, 0); // Animation time in seconds, mod 1 to keep it in the range [0, 1]
 
         // Kill fish if tank is dirty for too long
-        if(color_time >= 0.7){
+        if(color_time >= 0.6){
             this.display_text = "Clean your tank now!";
         }
-        if(color_time >= 0.75){
+        if(color_time >= 0.65){
             this.display_text = "I warned you...";
         }
-        if(color_time >= 0.8){
+        if(color_time >= 0.7){
             this.display_text = "";
             this.killFish = true;
         }
